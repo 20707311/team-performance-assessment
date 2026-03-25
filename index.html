@@ -155,22 +155,38 @@ async function submitScores() {
 /* 一键重置（核心新增功能） */
 async function resetAll() {
   const ok = confirm(
-    "⚠️ 确认清空所有历史评分数据？\n此操作不可恢复。"
+    "⚠️ 确认清空所有评分数据？\n这将开启新一轮评估。"
   );
   if (!ok) return;
 
+  // 1️⃣ 清空数据库
   await supabaseClient
     .from("scores")
     .delete()
-    .neq("id", -1); // 删除所有行
+    .neq("id", -1);
 
-  document.getElementById("summary").innerHTML = "";
-  if (barChart) barChart.destroy();
-  if (radarChart) radarChart.destroy();
+  // 2️⃣ 清空前端统计内容（非常关键）
+  document.getElementById("summary").innerHTML =
+    "<p>暂无评分数据</p>";
 
-  alert("✅ 所有评分数据已清空，可以开始新一轮评估");
+  // 3️⃣ 销毁已有图表
+  if (barChart) {
+    barChart.destroy();
+    barChart = null;
+  }
+  if (radarChart) {
+    radarChart.destroy();
+    radarChart = null;
+  }
+
+  // 4️⃣（可选）把滑块重置到默认值
+  questions.forEach((_, i) => {
+    document.getElementById("q" + i).value = 5;
+    document.getElementById("v" + i).innerText = 5;
+  });
+
+  alert("✅ 已开启新一轮评估");
 }
-
 /* ================= 统计与图表 ================= */
 let barChart = null;
 let radarChart = null;
