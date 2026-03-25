@@ -4,10 +4,10 @@
   <meta charset="UTF-8">
   <title>高绩效团队评估</title>
 
-  <!-- Supabase SDK -->
+  <!-- ✅ 正确加载 Supabase SDK -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
-  <!-- Chart.js -->
+  <!-- ✅ 正确加载 Chart.js -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
   <style>
@@ -47,21 +47,6 @@
       background: #1677ff;
       color: #fff;
     }
-    .danger {
-      background: #ff4d4f;
-    }
-    .summary {
-      background: #fff;
-      padding: 20px;
-      border-radius: 8px;
-      margin-top: 30px;
-    }
-    canvas {
-      background: #fff;
-      margin-top: 30px;
-      padding: 15px;
-      border-radius: 8px;
-    }
   </style>
 </head>
 
@@ -73,162 +58,72 @@
 
 <button onclick="submitScores()">提交评分</button>
 
-<!-- ✅ 管理员重置按钮 -->
-<button class="danger" onclick="resetAll()">
-  管理员一键重置（清空所有评分）
-</button>
-
-<div id="summary" class="summary"></div>
-
-<canvas id="barChart"></canvas>
-<canvas id="radarChart"></canvas>
-
 <script>
-/* Supabase 配置 */
-const SUPABASE_URL = "https://eoemidfxwkwapuncnsye.supabase.co";
-const SUPABASE_ANON_KEY = "sb_publishable_Jy-XR8__rnOz9mDf7mr6PA_csMj7ehK";
-const supabaseClient = supabase.createClient(
-  SUPABASE_URL,
-  SUPABASE_ANON_KEY
-);
+  /* ===== Supabase 配置 ===== */
+  const SUPABASE_URL = "https://eoemidfxwkwapuncnsye.supabase.co";
+  const SUPABASE_ANON_KEY = "sb_publishable_Jy-XR8__rnOz9mDf7mr6PA_csMj7ehK";
 
-/* 评分项 */
-const questions = [
-  "团队成员感到被重视",
-  "成为团队一员充满乐趣",
-  "团队充分发挥员工的最高水平和最佳才能",
-  "团队努力保留优秀人才",
-  "员工理解自己的工作如何匹配团队目标",
-  "团队领导者以身作则推动高绩效",
-  "业务状态的重要信息与所有人共享",
-  "团队持续寻找提升工作效率的方法",
-  "工作团队内部信息自由交换",
-  "团队将问题转化为机遇",
-  "持续寻求新想法",
-  "学习行为受到奖励",
-  "团队快速适应环境变化",
-  "新想法得到尝试落地",
-  "错误被视为学习的机会"
-];
-
-const shortLabels = [
-  "被重视","乐趣","发挥","留才","目标",
-  "领导","共享","效率","沟通",
-  "机遇","创意","学习","适应","落地","复盘"
-];
-
-/* 渲染评分项 */
-const container = document.getElementById("questions");
-questions.forEach((q, i) => {
-  const div = document.createElement("div");
-  div.className = "question";
-  div.innerHTML = `
-    <b>${i + 1}. ${q}</b>
-    <div class="score">
-      <input type="range" min="0" max="10" value="5" id="q${i}">
-      <div class="score-value" id="v${i}">5</div>
-    </div>
-  `;
-  container.appendChild(div);
-  const slider = div.querySelector("input");
-  const value = div.querySelector(".score-value");
-  slider.oninput = () => value.innerText = slider.value;
-});
-
-/* 提交评分 */
-async function submitScores() {
-  const scores = [];
-  for (let i = 0; i < questions.length; i++) {
-    scores.push(Number(document.getElementById("q" + i).value));
-  }
-  const { error } = await supabaseClient
-    .from("scores")
-    .insert([{ scores }]);
-  if (error) {
-    alert("❌ 提交失败");
-  } else {
-    alert("✅ 提交成功，感谢参与！");
-    loadStatistics();
-  }
-}
-
-/* 一键重置（核心新增功能） */
-async function resetAll() {
-  const ok = confirm(
-    "⚠️ 确认清空所有历史评分数据？\n此操作不可恢复。"
+  const supabaseClient = supabase.createClient(
+    SUPABASE_URL,
+    SUPABASE_ANON_KEY
   );
-  if (!ok) return;
 
-  await supabaseClient
-    .from("scores")
-    .delete()
-    .neq("id", -1); // 删除所有行
+  /* ===== 评分项 ===== */
+  const questions = [
+    "团队成员感到被重视",
+    "成为团队一员充满乐趣",
+    "团队充分发挥员工的最高水平和最佳才能",
+    "团队努力保留优秀人才",
+    "员工理解自己的工作如何匹配团队目标",
+    "团队领导者以身作则推动高绩效",
+    "业务状态的重要信息与所有人共享",
+    "团队持续寻找提升工作效率的方法",
+    "工作团队内部信息自由交换",
+    "团队将问题转化为机遇",
+    "持续寻求新想法",
+    "学习行为受到奖励",
+    "团队快速适应环境变化",
+    "新想法得到尝试落地",
+    "错误被视为学习的机会"
+  ];
 
-  document.getElementById("summary").innerHTML = "";
-  if (barChart) barChart.destroy();
-  if (radarChart) radarChart.destroy();
+  const container = document.getElementById("questions");
 
-  alert("✅ 所有评分数据已清空，可以开始新一轮评估");
-}
+  questions.forEach((q, i) => {
+    const div = document.createElement("div");
+    div.className = "question";
+    div.innerHTML = `
+      <b>${i + 1}. ${q}</b>
+      <div class="score">
+        <input type="range" min="0" max="10" value="5" id="q${i}">
+        <div class="score-value" id="v${i}">5</div>
+      </div>
+    `;
+    container.appendChild(div);
 
-/* ================= 统计与图表 ================= */
-let barChart = null;
-let radarChart = null;
-
-async function loadStatistics() {
-  const { data } = await supabaseClient
-    .from("scores")
-    .select("scores");
-
-  if (!data || data.length === 0) {
-    document.getElementById("summary").innerHTML =
-      "<p>暂无评分数据</p>";
-    return;
-  }
-
-  const count = data.length;
-  const sums = Array(15).fill(0);
-  data.forEach(r =>
-    r.scores.forEach((v, i) => sums[i] += v)
-  );
-  const averages = sums.map(s => (s / count).toFixed(2));
-  const overall = (
-    averages.reduce((a, b) => +a + +b, 0) / 15
-  ).toFixed(2);
-
-  document.getElementById("summary").innerHTML = `
-    <h2>评估结果汇总</h2>
-    <p>参与人数：<b>${count}</b></p>
-    <p>总体平均分：<b>${overall}</b></p>
-  `;
-
-  drawCharts(averages);
-}
-
-function drawCharts(averages) {
-  if (barChart) barChart.destroy();
-  if (radarChart) radarChart.destroy();
-
-  barChart = new Chart(barChart = document.getElementById("barChart"), {
-    type: "bar",
-    data: {
-      labels: shortLabels,
-      datasets: [{ label: "平均分", data: averages }]
-    },
-    options: { scales: { y: { min: 0, max: 10 } } }
+    const slider = div.querySelector("input");
+    const value = div.querySelector(".score-value");
+    slider.oninput = () => value.innerText = slider.value;
   });
 
-  radarChart = new Chart(document.getElementById("radarChart"), {
-    type: "radar",
-    data: {
-      labels: shortLabels,
-      datasets: [{ label: "团队画像", data: averages }]
-    },
-    options: { scales: { r: { min: 0, max: 10 } } }
-  });
-}
+  console.log("✅ 已成功渲染 15 个评分项");
 
-loadStatistics();
+  async function submitScores() {
+    const scores = [];
+    for (let i = 0; i < questions.length; i++) {
+      scores.push(Number(document.getElementById("q" + i).value));
+    }
+
+    const { error } = await supabaseClient
+      .from("scores")
+      .insert([{ scores }]);
+
+    if (error) {
+      alert("❌ 提交失败");
+    } else {
+      alert("✅ 提交成功");
+    }
+  }
 </script>
 
 </body>
